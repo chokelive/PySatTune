@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satellite Control Dashboard</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='track.css') }}">
+
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      font-family: monospace;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: auto;
+      grid-gap: 5px;
+      padding: 10px;
+    }
+    .panel {
+      border: 1px solid #555;
+      padding: 10px;
+      background-color: #111;
+    }
+    .title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #00ffff;
+    }
+    .button {
+      background-color: #333;
+      color: #fff;
+      border: 1px solid #888;
+      padding: 5px 10px;
+      margin: 3px 3px 3px 0;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .button:hover {
+      background-color: #555;
+    }
+    .flex {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .footer {
+      grid-column: 1 / -1;
+      border-top: 1px solid #333;
+      padding-top: 10px;
+      text-align: center;
+      color: #888;
+    }
+    .tabs button {
+      background-color: #000;
+      color: #ccc;
+      border: 1px solid #666;
+      padding: 5px 10px;
+      margin: 2px;
+      font-size: 14px;
+    }
+    input[type="text"] {
+      background-color: #222;
+      color: #fff;
+      border: 1px solid #666;
+      padding: 4px;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 4px 0;
+    }
+    select {
+      background-color: #222;
+      color: #fff;
+      border: 1px solid #666;
+      padding: 4px;
+    }
+    @media (max-width: 1000px) {
+      .container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 600px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+      .button, .tabs button {
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="panel">
+      <div class="title">MAP</div>
+      <div style="height: 400px; background: #222;">
+        <img id="satImage" src="/satmap" alt="Satellite Map" style="width: 100%; height: 100%; object-fit: cover;">
+      </div>
+    </div>
+    <div class="panel">
+      <div class="title">POLAR</div>
+      <div style="height: 150px; background: #222;">[Polar Plot]</div>
+    </div>
+    <div class="panel">
+      <div class="title">GROUND</div>
+      <div style="height: 150px; background: #222;">[Elevation Graph]</div>
+    </div>
+
+    <div class="panel">
+      <div class="title">TRACK</div>
+
+      <div>Name: <input type="text" placeholder="Satellite name" /></div>
+
+      <div class="flex">
+        <button class="button">SEARCH</button>
+        <button class="button">STAT</button>
+        <button class="button">GRID</button>
+      </div>
+
+      <!-- Tracking Data Section -->
+      <div class="track-data">
+        <div><span class="label">SAT POS:</span> <span id="sat-pos" class="value">--° / --°</span></div>
+        <div><span class="label">ANT POS:</span> <span id="ant-pos" class="value">--° / --°</span></div>
+        <div><span class="label">RANGE:</span> <span id="range" class="value">--- km / --- mi</span></div>
+        <div><span class="label">AOS:</span> <span id="aos" class="value">--:--:-- @ --°</span></div>
+        <div><span class="label">LOS:</span> <span id="los" class="value">--:--:-- @ --°</span></div>
+        <div><span class="label">MAX EL:</span> <span id="max-el" class="value">--°</span></div>
+        <div><span class="label">TIME:</span> <span id="track-time" class="value">--:--:--</span></div>
+        <div><span class="label">LAST MSG:</span> <span id="last-msg" class="value">--</span></div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex">
+        <button class="button">NEXT PASSES</button>
+        <button class="button">VIEW ALL</button>
+        <button class="button">SCHEDULE</button>
+        <button class="button stop">STOP ALL</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title">RADIO</div>
+        <div style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+
+            <button class="button" onclick="resetRig()">RESET</button>
+
+            <label for="modeSelect" style="color: white;">RX:</label>
+            <select id="modeSelectRX" onchange="setModeRX()" style="padding: 4px;">
+                <option value="FM">FM</option>
+                <option value="LSB">LSB</option>
+                <option value="USB">USB</option>
+                <option value="CW">CW</option>
+            </select>
+
+            <label for="modeSelect" style="color: white;">TX:</label>
+            <select id="modeSelectTX" onchange="setModeTX()" style="padding: 4px;">
+                <option value="FM">FM</option>
+                <option value="LSB">LSB</option>
+                <option value="USB">USB</option>
+                <option value="CW">CW</option>
+            </select>
+
+        </div>
+      <!-- <div style="font-size: 18px; font-weight: bold;">Active: --- / ---</div> -->
+      <div style="font-size: 20px; font-weight: bold;">
+        Freq: 
+        <span id="rx-actual" style="color: lightgreen;">Loading...</span> /
+        <span id="tx-actual" style="color: lightblue;">Loading...</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="title">LOG</div>
+      <div style="height: 120px; overflow: auto; background-color: #000; color: #0f0;">[Log output]</div>
+    </div>
+
+    <div class="panel tabs footer">
+      <button>CONTROL</button>
+      <button>TLE/FREQ DB</button>
+      <button>ROTATOR</button>
+      <button>RADIO</button>
+      <button>LOCATION</button>
+      <button>QSO LOG</button>
+      <button>WINDOW</button>
+      <button>SCHEDULE</button>
+      <button>ABOUT</button>
+    </div>
+  </div>
+
+
+    <script>
+    function resetRig() {
+        fetch('/api/resetrig')
+            .then(response => response.json())
+            .then(data => alert(data.status))
+            .catch(error => alert("❌ Failed to reset rig."));
+    }
+
+    function setModeRX() {
+        const mode = document.getElementById("modeSelectRX").value;
+
+        // Append mode as a query parameter
+        fetch(`/api/setmodeRX?mode=${encodeURIComponent(mode)}`)
+            .then(response => response.json())
+            .then(data => alert(data.status))
+            .catch(error => alert("❌ Failed to set mode."));
+    }
+
+    function setModeTX() {
+        const mode = document.getElementById("modeSelectTX").value;
+
+        // Append mode as a query parameter
+        fetch(`/api/setmodeTX?mode=${encodeURIComponent(mode)}`)
+            .then(response => response.json())
+            .then(data => alert(data.status))
+            .catch(error => alert("❌ Failed to set mode."));
+    }
+    </script>
+
+
+    <script>
+    async function fetchRigData() {
+      try {
+        const response = await fetch('/api/rig');
+        const data = await response.json();
+        const rig = data.RIG_CONTROL;
+
+        // Update big values
+        document.getElementById('rx-actual').textContent = rig.rx_actual_freq.toLocaleString();
+        document.getElementById('tx-actual').textContent = rig.tx_actual_freq.toLocaleString();
+
+        // Populate other fields (excluding actual_freqs)
+        //document.getElementById('rx-doppler').textContent = rig.doppler_rx.toLocaleString();
+        //document.getElementById('tx-doppler').textContent = rig.doppler_tx.toLocaleString();
+        //document.getElementById('rx-tune').textContent = rig.rx_tune_freq.toLocaleString();
+        //document.getElementById('tx-tune').textContent = rig.tx_tune_freq.toLocaleString();    
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      }
+    }
+
+    // Initial and interval refresh
+    fetchRigData();
+    setInterval(fetchRigData, 1000);
+  </script>
+
+
+<script>
+setInterval(() => {
+  const img = document.getElementById("satImage");
+  img.src = "/satmap?ts=" + new Date().getTime();  // prevent caching
+}, 10000); // refresh every 60 seconds
+</script>
+
+
+<script>
+  async function fetchTrackData() {
+    try {
+      const response = await fetch('/api/track');  // Adjust if API is hosted remotely
+      const data = await response.json();
+
+      document.getElementById('sat-pos').textContent = data.sat_pos || "--";
+      document.getElementById('ant-pos').textContent = data.ant_pos || "--";
+      document.getElementById('range').textContent = data.range || "-- km / -- mi";
+      document.getElementById('aos').textContent = data.aos || "--";
+      document.getElementById('los').textContent = data.los || "--";
+      document.getElementById('max-el').textContent = `${data.max_el}°`;
+      document.getElementById('track-time').textContent = data.utc_time || "--";
+      document.getElementById('last-msg').textContent = new Date().toLocaleTimeString();
+    } catch (error) {
+      console.error("Error fetching tracking data:", error);
+      document.getElementById('last-msg').textContent = "❌ Error";
+    }
+  }
+
+  // 🔁 Auto-refresh every 1 seconds
+  fetchTrackData(); // fetch immediately on load
+  setInterval(fetchTrackData, 1000); // then repeat every 10 sec
+</script>
+
+
+
+
+</body>
+</html>

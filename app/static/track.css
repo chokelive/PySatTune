@@ -1,0 +1,25 @@
+.track-data {
+  font-family: monospace;
+  background: #111;
+  color: #ffdc60;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.track-data .label {
+  display: inline-block;
+  width: 80px;
+  color: #aaa;
+}
+
+.track-data .value {
+  color: #ffdc60;
+  font-weight: bold;
+}
+
+.button.stop {
+  background-color: #c33;
+  color: white;
+}

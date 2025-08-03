@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RIG Control Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding: 2rem;
+      background-color: #f8f9fa;
+    }
+    .card {
+      margin-top: 1rem;
+    }
+    .value-big {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #198754; /* green */
+    }
+    .value-small {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #0d6efd;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="mb-4">🛰️ RIG Control Dashboard</h1>
+
+    <!-- Big Frequency Cards Row -->
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm border-success">
+          <div class="card-body">
+            <h4 class="card-title">RX Actual Frequency</h4>
+            <p id="rx-actual" class="value-big">Loading...</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm border-primary">
+          <div class="card-body">
+            <h4 class="card-title">TX Actual Frequency</h4>
+            <p id="tx-actual" class="value-big">Loading...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Smaller Info Cards Row -->
+    <div class="row g-4 mt-3" id="info-row">
+
+      <!-- Add more info cards as needed -->
+      <div class="col-md-3 col-sm-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h6 class="card-title text-muted">RX Doppler</h6>
+            <p id="rx-doppler" class="value-small">Loading...</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h6 class="card-title text-muted">TX Doppler</h6>
+            <p id="tx-doppler" class="value-small">Loading...</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h6 class="card-title text-muted">RX Tune</h6>
+            <p id="rx-tune" class="value-small">Loading...</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h6 class="card-title text-muted">TX Tune</h6>
+            <p id="tx-tune" class="value-small">Loading...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchRigData() {
+      try {
+        const response = await fetch('/api/rig');
+        const data = await response.json();
+        const rig = data.RIG_CONTROL;
+
+        // Update big values
+        document.getElementById('rx-actual').textContent = rig.rx_actual_freq.toLocaleString();
+        document.getElementById('tx-actual').textContent = rig.tx_actual_freq.toLocaleString();
+
+        // Populate other fields (excluding actual_freqs)
+        document.getElementById('rx-doppler').textContent = rig.doppler_rx.toLocaleString();
+        document.getElementById('tx-doppler').textContent = rig.doppler_tx.toLocaleString();
+        document.getElementById('rx-tune').textContent = rig.rx_tune_freq.toLocaleString();
+        document.getElementById('tx-tune').textContent = rig.tx_tune_freq.toLocaleString();    
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      }
+    }
+
+    // Initial and interval refresh
+    fetchRigData();
+    setInterval(fetchRigData, 1000);
+  </script>
+</body>
+</html>
